@@ -1,5 +1,7 @@
 print ("LABUBU MONSTER")
 print ("LABUBU MONSTER")
+surface.PlaySound("3dmeagle.wav")
+            surface.PlaySound("3dmeagle.wav")
 print ("LABUBU MONSTER")
 print ("LABUBU MONSTER")
 print ("LABUBU MONSTER")
