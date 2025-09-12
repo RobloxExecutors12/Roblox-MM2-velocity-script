@@ -1,17 +1,6 @@
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
-say voidhook on top - discord.gg/bcfG2QexWc
+unbind w
+unbind s
+unbind d
+unbind a
+unbind e
+unbind space
