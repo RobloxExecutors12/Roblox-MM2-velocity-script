@@ -1,57 +1,17 @@
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-surface.PlaySound("3dmeagle.wav")
-            surface.PlaySound("3dmeagle.wav")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
-print ("LABUBU MONSTER")
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
+say voidhook on top - discord.gg/bcfG2QexWc
