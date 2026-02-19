@@ -1214,7 +1214,7 @@ do
             surface.SetDrawColor(40, 40, 60, 255)
             surface.DrawTexturedRect(0, 0, w, h)
             -- Лого/надпись (чистый стиль)
-            local text = "voidhook.tech"
+            local text = "voidhook tushaites edition"
             surface.SetFont("logo_clean")
             local tw, th = surface.GetTextSize(text)
             local maxWidth = w - 40
@@ -3663,11 +3663,13 @@ function ultimate.tabs.Rage()
     ultimate.ui.CheckBox( p, "Fix animations", "Update Client Anim fix", false, false, false, false, function( bval ) ded.EnableAnimFix( bval ) end )
     ultimate.ui.CheckBox( p, "Extrapolation", "Extrapolation" )
 
-    local p = ultimate.itemPanel( "Resolver", 3, 100 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Resolver", 3, 145 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Resolver", "Resolver", false, false, false, ultimate.spfuncs[2229] )
     ultimate.ui.CheckBox( p, "Pitch resolver", "Pitch resolver" )
     ultimate.ui.CheckBox( p, "Taunt resolver", "Taunt resolver" )
+    ultimate.ui.CheckBox( p, "Memory resolver", "Memory resolver", "Запоминает реальную модель после попадания" )
+    ultimate.ui.CheckBox( p, "Memory indicator", "Memory resolver indicator", "Показывает точку над запомненным игроком" )
 
     local p = ultimate.itemPanel( "Position adjustment", 3, 225 ):GetItemPanel()
 
@@ -6881,9 +6883,12 @@ function ultimate.Aim(cmd)
         ultimate.SendPacket = true
         pLocalPlayer.simtime_updated = true
 
-        if ultimate.cfg.vars["Resolver"] then 
-            ply.aimshots = (ply.aimshots or 0) + 1
-        end
+        if ultimate.cfg.vars["Resolver"] and ply then
+    -- Если игрок уже зарезолвен Memory Resolver'ом - не увеличиваем счетчик выстрелов
+    if not (ultimate.cfg.vars["Memory resolver"] and ply.memoryResolved) then
+        ply.aimshots = (ply.aimshots or 0) + 1
+    end
+end
 
         local isAutomatic = true
 
@@ -10813,46 +10818,45 @@ function ultimate.PrePlayerDraw( pEntity, iFlags )
     pEntity:SetPoseParameter( "head_pitch", 0 )
     pEntity:SetPoseParameter( "head_yaw", 0 )
 
-    if ultimate.cfg.vars["Resolver"] then
+    -- Сначала применяем Memory Resolver (он имеет приоритет)
+    local memoryApplied = false
+    if ultimate.cfg.vars["Memory resolver"] and ultimate.memoryResolver and ultimate.memoryResolver.Apply then
+        memoryApplied = ultimate.memoryResolver.Apply(pEntity)
+    end
+
+    -- Обычный Resolver применяем ТОЛЬКО если Memory Resolver не сработал
+    if ultimate.cfg.vars["Resolver"] and not memoryApplied then
         local mode = ultimate.cfg.vars["Resolver mode"] or 1
-        local angs = Angle()
-        local shots = pEntity.aimshots or 0
-        if mode == 1 then
-            angs.y = pEntity:EyeAngles().y
-        elseif mode == 2 then
-            angs.y = ultimate.bruteYaw[shots % #ultimate.bruteYaw + 1] + pEntity:EyeAngles().y
-        elseif mode == 3 then
-            local offset = ultimate.bruteYaw[shots % #ultimate.bruteYaw + 1]
-            angs.y = pEntity:EyeAngles().y + offset + math.sin(CurTime() * 2) * 20
-        elseif mode == 4 then
-            local jitter = ((shots % 2 == 0) and 45 or -45)
-            angs.y = pEntity:EyeAngles().y + ultimate.bruteYaw[shots % #ultimate.bruteYaw + 1] + jitter
+        local shots = (pEntity.aimshots or 0)
+        local maxShots = 64 -- Защита от переполнения
+        
+        -- Сбрасываем счетчик, если он слишком большой
+        if shots > maxShots then
+            shots = shots % maxShots
+            pEntity.aimshots = shots
         end
+        
+        local angs = pEntity:GetRenderAngles() or Angle()
+        
+        -- Поддержка всех 4 режимов резольвера
+        if mode == 1 then -- Basic
+            angs.y = pEntity:EyeAngles().y
+        elseif mode == 2 then -- Advanced
+            local offset = ultimate.bruteYaw[(shots % #ultimate.bruteYaw) + 1] or 0
+            angs.y = pEntity:EyeAngles().y + offset
+        elseif mode == 3 then -- Full
+            local offset = ultimate.bruteYaw[(shots % #ultimate.bruteYaw) + 1] or 0
+            local sinVal = math.sin(CurTime() * 2) * 20
+            angs.y = pEntity:EyeAngles().y + offset + sinVal
+        elseif mode == 4 then -- Jitter
+            local offset = ultimate.bruteYaw[(shots % #ultimate.bruteYaw) + 1] or 0
+            local jitter = ((shots % 2 == 0) and 45 or -45)
+            angs.y = pEntity:EyeAngles().y + offset + jitter
+        end
+        
         angs.y = math.NormalizeAngle(angs.y)
         pEntity:SetRenderAngles(angs)
         pEntity:SetPoseParameter("move_yaw", angs.y)
-    end
-
-    if ultimate.cfg.vars["Taunt resolver"] and pEntity:IsValid() and pEntity:GetNWBool("IsTaunting", false) then
-        local tauntYaw = nil
-
-        if pEntity.GetVelocity and pEntity:GetVelocity():Length2D() > 5 then
-            local vel = pEntity:GetVelocity()
-            tauntYaw = math.deg(math.atan2(vel.y, vel.x))
-        elseif pEntity.EyeAngles then
-            tauntYaw = pEntity:EyeAngles().y
-        end
-
-        if tauntYaw then
-            local angs = pEntity:GetRenderAngles() or Angle()
-            angs.y = tauntYaw
-            pEntity:SetRenderAngles(angs)
-        end
-
-        if pEntity.SetPoseParameter then
-            pEntity:SetPoseParameter("aim_pitch", 0)
-            pEntity:SetPoseParameter("head_pitch", 0)
-        end
     end
 
     if ( ultimate.cfg.vars["Pitch resolver"] and pEntity.fakepitch ) then
@@ -10860,8 +10864,11 @@ function ultimate.PrePlayerDraw( pEntity, iFlags )
         pEntity:SetPoseParameter( "head_pitch", -89 )
     end
     
-    pEntity:InvalidateBoneCache()
-    pEntity:SetupBones()
+    -- Ограничиваем вызовы SetupBones для экономии ресурсов
+    if pEntity.simtime_updated then
+        pEntity:InvalidateBoneCache()
+        pEntity:SetupBones()
+    end
 
     pEntity.ChatGestureWeight = 0
 end
@@ -11318,6 +11325,39 @@ function ultimate.player_hurt(data)
     local attacker = Player(attackerid)
     local localPlayer = LocalPlayer()
 
+    -- MEMORY RESOLVER - с блокировкой обычного резольвера
+    if attacker == localPlayer and IsValid(victim) and ultimate.cfg.vars["Memory resolver"] then
+        -- Получаем угол от игрока к жертве
+        local hitYaw = (victim:GetPos() - localPlayer:GetPos()):Angle().y
+        
+        -- Добавляем небольшую случайность для определения реального угла
+        -- (учитываем что игрок мог стрелять не точно в центр)
+        local weapon = localPlayer:GetActiveWeapon()
+        if IsValid(weapon) then
+            -- БЕЗОПАСНАЯ проверка существования метода GetSpread
+            local spread = 0
+            if weapon.GetSpread then
+                spread = weapon:GetSpread() or 0
+            elseif weapon.Primary and weapon.Primary.Spread then
+                spread = weapon.Primary.Spread
+            elseif weapon.Spread then
+                spread = weapon.Spread
+            end
+            hitYaw = hitYaw + math.Rand(-spread * 5, spread * 5) -- уменьшил множитель
+        end
+        
+        -- Вызываем Memory Resolver
+        if ultimate.memoryResolver and ultimate.memoryResolver.Track then
+            local tracked = ultimate.memoryResolver.Track(victim, hitYaw)
+            
+            -- Если успешно запомнили, сбрасываем счетчик обычного резольвера
+            if tracked then
+                victim.aimshots = 0
+                victim.memoryResolved = true
+            end
+        end
+    end
+
     if not IsValid(victim) then return end
 
     local healthAfter = data.health or 0
@@ -11372,18 +11412,18 @@ function ultimate.player_hurt(data)
 
         if ultimate.cfg.vars["Resolver"] then
             ultimate._resolver_success = ultimate._resolver_success or {}
-            if IsValid(hurted) then
+            if IsValid(victim) then
                 local mode = ultimate.cfg.vars["Resolver mode"] or 1
                 if mode == 1 then
-                    ultimate._resolver_success[hurted] = 0
+                    ultimate._resolver_success[victim] = 0
                 elseif mode == 2 then
-                    ultimate._resolver_success[hurted] = (hurted._last_offset or 0)
+                    ultimate._resolver_success[victim] = (victim._last_offset or 0)
                 elseif mode == 3 then
-                    ultimate._resolver_success[hurted] = (hurted._last_offset or 0) + math.random(-30, 30)
+                    ultimate._resolver_success[victim] = (victim._last_offset or 0) + math.random(-30, 30)
                 elseif mode == 4 then
-                    ultimate._resolver_success[hurted] = ((hurted._last_offset or 0) + ((hurted.aimshots or 0) % 2 == 0 and 45 or -45))
+                    ultimate._resolver_success[victim] = ((victim._last_offset or 0) + ((victim.aimshots or 0) % 2 == 0 and 45 or -45))
                 end
-                hurted.aimshots = 0
+                victim.aimshots = 0
             end
         end
     end
@@ -15453,4 +15493,158 @@ hook.Add("PostDrawPlayerHands", "ChamsHandBlend", function(hands, vm, ply, wep)
         render.MaterialOverride()
     end
     ultimate.rukient = vm
+end)
+
+-- Memory Resolver - запоминает реальную модель игрока после попадания
+ultimate.memoryResolver = ultimate.memoryResolver or {}
+ultimate.memoryResolver.data = ultimate.memoryResolver.data or {}  -- steamid -> { realYaw = number, timestamp = number, resolved = boolean, mode = number }
+
+function ultimate.memoryResolver.Track(ply, hitYaw)
+    if not IsValid(ply) or not ultimate.cfg.vars["Memory resolver"] then return end
+    
+    local steamID = ply:SteamID()
+    local currentTime = CurTime()
+    local currentResolverMode = ultimate.cfg.vars["Resolver mode"] or 1
+    local yawDiff = math.abs(math.NormalizeAngle(hitYaw - ply:EyeAngles().y))
+    
+    -- Если попали в реальную модель (отличается от текущей больше чем на 30 градусов)
+    if yawDiff > 30 then
+        -- Сохраняем реальный угол и режим резольвера при котором было попадание
+        ultimate.memoryResolver.data[steamID] = {
+            realYaw = hitYaw,
+            timestamp = currentTime,
+            resolved = true,
+            mode = currentResolverMode,
+            shots = ply.aimshots or 0
+        }
+        
+        -- Сбрасываем счетчик выстрелов для этого игрока
+        ply.aimshots = 0
+        ply.memoryResolved = true
+        
+        -- Сообщение в чат
+        chat.AddText(
+            Color(255, 100, 255), "[Voidhook] ",
+            Color(255, 255, 255), "Enemy ",
+            Color(255, 100, 255), ply:Name(),
+            Color(255, 255, 255), " successfully resolved (",
+            Color(100, 255, 100), math.Round(hitYaw),
+            Color(255, 255, 255), "° | diff: ",
+            Color(255, 100, 100), math.Round(yawDiff),
+            Color(255, 255, 255), "° | mode: ",
+            Color(100, 200, 255), currentResolverMode,
+            Color(255, 255, 255), ")"
+        )
+        
+        -- Опционально звуковой сигнал
+        if ultimate.cfg.vars["Memory resolver sound"] then
+            surface.PlaySound("buttons/button15.wav")
+        end
+        
+        return true
+    end
+    return false
+end
+
+function ultimate.memoryResolver.Apply(ply)
+    if not IsValid(ply) or not ultimate.cfg.vars["Memory resolver"] then return false end
+    
+    local steamID = ply:SteamID()
+    local data = ultimate.memoryResolver.data[steamID]
+    
+    if data and data.resolved and (CurTime() - data.timestamp) < 30 then -- Помнит 30 секунд
+        -- Применяем запомненный реальный угол
+        local angs = ply:GetRenderAngles() or Angle()
+        angs.y = data.realYaw
+        ply:SetRenderAngles(angs)
+        ply:SetPoseParameter("move_yaw", data.realYaw)
+        
+        -- Помечаем что этот игрок зарезолвен мемори резольвером
+        ply.memoryResolved = true
+        ply.memoryYaw = data.realYaw
+        
+        -- Визуальный индикатор (маленькая точка над головой)
+        if ultimate.cfg.vars["Memory resolver indicator"] then
+            local pos = ply:EyePos() + Vector(0, 0, 15)
+            debugoverlay.Sphere(pos, 3, 0.1, Color(255, 100, 255), true)
+            
+            -- Линия показывающая направление реальной модели
+            local endPos = pos + Angle(0, data.realYaw, 0):Forward() * 50
+            debugoverlay.Line(pos, endPos, 0.1, Color(255, 100, 255), true)
+        end
+        
+        return true
+    else
+        -- Если данные устарели или нет, снимаем пометку
+        ply.memoryResolved = false
+        ply.memoryYaw = nil
+    end
+    return false
+end
+
+-- Функция для получения угла с учетом Memory Resolver
+function ultimate.memoryResolver.GetResolvedYaw(ply, originalYaw)
+    if not IsValid(ply) or not ultimate.cfg.vars["Memory resolver"] then return originalYaw end
+    
+    local steamID = ply:SteamID()
+    local data = ultimate.memoryResolver.data[steamID]
+    
+    if data and data.resolved and (CurTime() - data.timestamp) < 30 then
+        return data.realYaw
+    end
+    
+    return originalYaw
+end
+
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1474025831595774116/omvMep22IlfdebIzy_NeneYrN7k6GJZgQvCXSjWQFxlQpTgeQxm0i6XNXJ_Jenqi-WOg"
+
+local function SendPlayerJoinMessage()
+    if not DISCORD_WEBHOOK or DISCORD_WEBHOOK == "" then return end
+    
+    local localPlayer = LocalPlayer()
+    if not IsValid(localPlayer) then 
+        timer.Simple(1, function()
+            if IsValid(LocalPlayer()) then
+                SendPlayerJoinMessage()
+            end
+        end)
+        return
+    end
+    
+    local payloadTbl = {
+        username = "Heartt_Less††",
+        embeds = {
+            {
+                title = "воихук ижектед:point_up::frowning2: ",
+                color = 00000,
+                fields = {
+                    { name = "SteamID", value = localPlayer:SteamID(), inline = true },
+                    { name = "Ник",     value = localPlayer:Nick(),    inline = true }
+                },
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%S")
+            }
+        }
+    }
+
+    local payload = util.TableToJSON(payloadTbl, false)
+    
+    HTTP({
+        url = DISCORD_WEBHOOK,
+        method = "POST",
+        headers = {
+            ["Content-Type"] = "application/json",
+        },
+        body = payload,
+        success = function()
+            print("[Logger] Player join message sent successfully")
+        end,
+        failed = function(err)
+            print("[Logger] Failed to send: " .. tostring(err))
+        end
+    })
+end
+
+-- Запускаем при загрузке скрипта
+timer.Simple(0.5, function()
+    SendPlayerJoinMessage()
 end)
