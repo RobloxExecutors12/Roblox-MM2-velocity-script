@@ -244,6 +244,11 @@ ultimate.cfg.vars["Facestab"]                   = false
 
 ultimate.cfg.vars["SMG Grenade"]        = false
 ultimate.cfg.vars["AR2 Predict"] = false
+ultimate.cfg.vars["Custom predict"] = false
+ultimate.cfg.vars["Custom predict strength"] = 1.0
+ultimate.cfg.vars["Custom predict mode"] = 1 -- 1 = velocity, 2 = acceleration, 3 = hybrid
+ultimate.cfg.vars["Custom predict gravity"] = true
+ultimate.cfg.vars["Custom predict debug"] = false
 -- Я ебал эти все предикты
 
 
@@ -1214,7 +1219,7 @@ do
             surface.SetDrawColor(40, 40, 60, 255)
             surface.DrawTexturedRect(0, 0, w, h)
             -- Лого/надпись (чистый стиль)
-            local text = "voidhook tushaites edition"
+            local text = "voidhook tusha1tes edition卐"
             surface.SetFont("logo_clean")
             local tw, th = surface.GetTextSize(text)
             local maxWidth = w - 40
@@ -3521,12 +3526,16 @@ function ultimate.tabs.Aimbot()
     ultimate.ui.CheckBox( p, "NoSpread", "Nospread", "Supported HL2, M9K, FAS2, CW2, SWB", false, false, ultimate.spfuncs[30] )
     ultimate.ui.CheckBox( p, "Try Predict Position", "Try Predict", "WIP")
 
-    local p = ultimate.itemPanel( "Prediction", 2, 140 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Prediction", 2, 250 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Crossbow predict", "Crossbow prediction" )
     ultimate.ui.Slider( p, "Simulation limit", "Simulation limit", 1, 10, 2 )
     ultimate.ui.CheckBox( p, "Smg grenade prediction", "SMG Grenade" )
     ultimate.ui.CheckBox( p, "AR2 Orb Predict", "AR2 Predict" )
+    ultimate.ui.CheckBox( p, "Custom predict", "Custom predict", "Предсказание на основе скорости противника" )
+    ultimate.ui.Slider( p, "Predict strength", "Custom predict strength", 0.1, 3.0, 1 )
+    ultimate.ui.CheckBox( p, "Use gravity", "Custom predict gravity", "Учитывать гравитацию для баллистики" )
+    ultimate.ui.CheckBox( p, "Debug visualize", "Custom predict debug", "Показывать линии предикта" )
 
     local p = ultimate.itemPanel( "Misc", 2, 135 ):GetItemPanel()
 
@@ -6643,7 +6652,14 @@ function ultimate.Aim(cmd)
     if ultimate.cfg.vars["Try Predict"] then
         ang = ultimate.TryPredict(cmd, ang)
     end
+    if ultimate.cfg.vars["Custom predict"] then
+        finalAngle = ultimate.CustomPredict(cmd, finalAngle)
+    end
 
+    if ultimate.cfg.vars["On shot aa"] then
+        finalAngle.p = -finalAngle.p - 180
+        finalAngle.y = finalAngle.y + 180
+    end
     if ultimate.cfg.vars["On shot aa"] then
         finalAngle.p = -finalAngle.p - 180
         finalAngle.y = finalAngle.y + 180
@@ -14522,6 +14538,67 @@ function ultimate.TryPredict(cmd, ang)
     return ang
 end
 
+-- Custom Predict - предсказание на основе скорости противника
+function ultimate.CustomPredict(cmd, ang)
+    if not ultimate.cfg.vars["Custom predict"] then return ang end
+    if not ultimate.target or not IsValid(ultimate.target) then return ang end
+    
+    local ply = ultimate.target
+    local weapon = ultimate.activeWeapon
+    if not IsValid(weapon) then return ang end
+    
+    -- Получаем скорость полета снаряда
+    local projectileSpeed = 3500 -- скорость по умолчанию для арбалета
+    
+    -- Пытаемся определить реальную скорость оружия
+    if weapon.BulletSpeed then
+        projectileSpeed = weapon.BulletSpeed
+    elseif weapon.Primary and weapon.Primary.BulletSpeed then
+        projectileSpeed = weapon.Primary.BulletSpeed
+    elseif weapon.Velocity then
+        projectileSpeed = weapon.Velocity
+    elseif weapon:GetClass() == "weapon_crossbow" then
+        projectileSpeed = 3500
+    elseif weapon:GetClass() == "weapon_rpg" then
+        projectileSpeed = 1800
+    elseif weapon:GetClass() == "weapon_physcannon" then
+        projectileSpeed = 2500
+    end
+    
+    -- Получаем позиции
+    local myPos = pLocalPlayer:EyePos()
+    local targetPos = ply:EyePos()
+    local targetVel = ply:GetVelocity()
+    local distance = myPos:Distance(targetPos)
+    
+    -- Сила предикта (из слайдера)
+    local strength = ultimate.cfg.vars["Custom predict strength"] or 1.0
+    
+    -- Время полета пули/снаряда
+    local flightTime = distance / projectileSpeed
+    
+    -- Простое предсказание на основе скорости
+    local predictedPos = targetPos + targetVel * flightTime * strength
+    
+    -- Учет гравитации для баллистики (опционально)
+    if ultimate.cfg.vars["Custom predict gravity"] then
+        local gravity = GetConVar("sv_gravity"):GetFloat() or 600
+        local drop = 0.5 * gravity * flightTime * flightTime
+        predictedPos.z = predictedPos.z - drop
+    end
+    
+    -- Визуализация для отладки (можно отключить)
+    if ultimate.cfg.vars["Custom predict debug"] then
+        debugoverlay.Line(myPos, predictedPos, 0.1, Color(255, 0, 255), true)
+        debugoverlay.Sphere(predictedPos, 5, 0.1, Color(255, 0, 255), true)
+    end
+    
+    -- Новый угол прицеливания
+    local newAng = (predictedPos - myPos):Angle()
+    newAng:Normalize()
+    
+    return newAng
+end
 
 hook.Add("PostDrawOpaqueRenderables", "ultimate_DrawFakeHitboxes", ultimate.DrawFakeModelHitboxes)
 
