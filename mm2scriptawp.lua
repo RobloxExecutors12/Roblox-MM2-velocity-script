@@ -6660,10 +6660,6 @@ function ultimate.Aim(cmd)
         finalAngle.p = -finalAngle.p - 180
         finalAngle.y = finalAngle.y + 180
     end
-    if ultimate.cfg.vars["On shot aa"] then
-        finalAngle.p = -finalAngle.p - 180
-        finalAngle.y = finalAngle.y + 180
-    end
 
     // Не делайте ничего тут, просто оставьте как есть, может быть пригодится
     if ultimate.cfg.vars["TF2 Predict"] and IsValid(me) and IsValid(ply) and ply:Alive() and ply ~= me then
